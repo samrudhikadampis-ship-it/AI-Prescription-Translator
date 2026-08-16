@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Decode Prescription | MediLingo </title>
+
+    <link rel="stylesheet" href="upload.css">
+</head>
+
+<body>
+
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+
+    
+    <header class="upload-nav">
+
+        <a href="index.html" class="back-btn">
+            ←
+        </a>
+
+        <div class="top-badge">
+            ✦ &nbsp; PRESCRIPTION READER
+        </div>
+
+        <a href="javascript:void(0)" class="how-btn" id="howItWorksBtn">
+        <span>?</span>
+        How it works
+        </a>
+
+    </header>
+
+
+    <main class="upload-page">
+
+        <div class="heading-content">
+
+            <p class="eyebrow">
+                ✦ PRESCRIPTION READER
+            </p>
+
+            <h1>
+                Decode your
+                <span>prescription.</span>
+            </h1>
+
+            <p class="description">
+                Upload a clear photo of your prescription
+                and we'll turn it into simple instructions.
+            </p>
+
+        </div>
+
+        <div class="upload-card">
+
+            <div class="upload-area">
+
+                <div class="upload-icon">
+                    ↑
+                </div>
+
+                <h2>
+                    Drop your prescription here
+                </h2>
+
+                <div class="or">
+                    <span></span>
+                    or
+                    <span></span>
+                </div>
+
+
+                <label for="prescription" class="choose-btn">
+                    <span class="image-icon">▧</span>
+                    Choose Image
+                </label>
+
+                <input
+                    type="file"
+                    id="prescription"
+                    accept="image/png, image/jpeg"
+                    hidden
+                >
+
+                <p class="file-info">
+                    JPG or PNG &nbsp;•&nbsp; Max 10MB
+                </p>
+
+            </div>
+
+        </div>
+
+        <button class="decode-btn" id="decodeBtn">
+
+            <span class="sparkle">✦</span>
+
+            <span>
+                Decode Prescription
+            </span>
+
+            <span class="arrow">
+                →
+            </span>
+
+        </button>
+
+        <div class="privacy">
+
+            <span class="shield">♢</span>
+
+            <div>
+                <strong>Your prescription is processed securely</strong>
+                <small>We never store your data.</small>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- HOW IT WORKS MODAL -->
+<div class="how-it-works-overlay" id="howItWorksModal">
+
+    <div class="how-it-works-card">
+
+        <button class="how-close-btn" id="closeHowItWorks">
+            &times;
+        </button>
+
+        <div class="how-header">
+            <h2>How <span>MedLingo</span> Works</h2>
+            <p>
+                From prescription → to understanding in just a few simple steps
+            </p>
+        </div>
+
+        <div class="how-steps">
+
+            <div class="how-step">
+                <div class="step-number purple">1</div>
+
+                <div class="step-icon purple-bg">
+                    📷
+                </div>
+
+                <h3>Upload Prescription</h3>
+
+                <p>
+                    Upload or capture a clear image of your prescription.
+                </p>
+            </div>
+
+
+            <div class="how-step">
+                <div class="step-number blue">2</div>
+
+                <div class="step-icon blue-bg">
+                    🤖
+                </div>
+
+                <h3>AI Reads Prescription</h3>
+
+                <p>
+                    AI analyzes the prescription and identifies medicines,
+                    dosage and instructions.
+                </p>
+            </div>
+
+
+            <div class="how-step">
+                <div class="step-number green">3</div>
+
+                <div class="step-icon green-bg">
+                    🔍
+                </div>
+
+                <h3>Decode Medical Terms</h3>
+
+                <p>
+                    Complex medical terms are converted into simple,
+                    understandable language.
+                </p>
+            </div>
+
+
+            <div class="how-step">
+                <div class="step-number orange">4</div>
+
+                <div class="step-icon orange-bg">
+                    💊
+                </div>
+
+                <h3>Understand Your Medicines</h3>
+
+                <p>
+                    See medicine names, uses, dosage, timing and important
+                    precautions.
+                </p>
+            </div>
+
+
+            <div class="how-step">
+                <div class="step-number pink">5</div>
+
+                <div class="step-icon pink-bg">
+                    ✓
+                </div>
+
+                <h3>Get Simple Summary</h3>
+
+                <p>
+                    Everything is presented in an easy-to-understand format.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="medical-note">
+
+            <div class="note-icon">
+                🛡️
+            </div>
+
+            <div>
+                <strong>Important Note</strong>
+
+                <p>
+                    MedLingo helps you understand your prescription better.
+                    It does not replace professional medical advice.
+                </p>
+            </div>
+
+        </div>
+
+
+        <button class="got-it-btn" id="gotItBtn">
+            ✨ Got it!
+        </button>
+
+    </div>
+
+</div>
+
+
+    <script src="upload.js"></script>
+
+</body>
+
+</html>
