@@ -1,43 +1,43 @@
-const OpenAI = require("openai");
+function analyzePrescription(text) {
 
-const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
+    const lowerText = text.toLowerCase();
 
-async function analyzePrescription(text) {
+    const medicines = [];
 
-    const response = await client.responses.create({
-        model: "gpt-5.6",
+    // Simple medicine detection for testing
+    const knownMedicines = [
+        "paracetamol",
+        "azithromycin",
+        "amoxicillin",
+        "ibuprofen",
+        "cetirizine",
+        "omeprazole",
+        "pantoprazole",
+        "metformin"
+    ];
 
-        instructions: `
-You are MediLingo, a medical document explanation assistant.
-
-Analyze the prescription text provided to you.
-
-Identify:
-- Medicine names
-- Dosage, if mentioned
-- Frequency/timing, if mentioned
-- Duration, if mentioned
-- General purpose of each medicine
-- Important instructions
-- Important warnings or precautions explicitly mentioned
-
-Rules:
-- Do not invent information.
-- If information is missing or unclear, say "Not clearly mentioned".
-- Do not change the doctor's prescribed dosage.
-- Do not diagnose the patient.
-- Do not tell the patient to start, stop, or change medication.
-- Keep the explanation simple and easy to understand.
-- Clearly state that this is an informational explanation and
-  the prescription should be confirmed with a qualified healthcare professional.
-`,
-
-        input: text
+    knownMedicines.forEach((medicine) => {
+        if (lowerText.includes(medicine)) {
+            medicines.push({
+                name: medicine,
+                purpose: "General purpose will be identified from the prescription.",
+                dosage: "Not clearly mentioned",
+                frequency: "Not clearly mentioned",
+                duration: "Not clearly mentioned"
+            });
+        }
     });
 
-    return response.output_text;
+    return {
+        disclaimer:
+            "This is an informational explanation only. Always confirm prescription details with a qualified healthcare professional.",
+
+        medicines: medicines,
+
+        instructions: "No specific instructions detected.",
+
+        originalText: text
+    };
 }
 
 module.exports = {

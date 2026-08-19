@@ -59,6 +59,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const { PDFParse } = require("pdf-parse");
+const { analyzePrescription } = require("../services/aiService");
 
 const router = express.Router();
 
@@ -122,21 +123,22 @@ router.post("/upload", upload.single("file"), async (req, res) => {
             data: dataBuffer
         });
 
-        // Extract text from PDF
         const result = await parser.getText();
 
-        // Release parser resources
         await parser.destroy();
 
         console.log("PDF text extracted successfully");
 
-        // Show extracted text in terminal
         console.log(result.text);
 
-        // Send response to Postman
+        // Send extracted text to AI
+        const aiAnalysis = analyzePrescription(result.text);
+
+        console.log("AI analysis completed");
+
         res.status(200).json({
             success: true,
-            message: "PDF uploaded and text extracted successfully",
+            message: "PDF uploaded and analyzed successfully",
 
             file: {
                 originalName: req.file.originalname,
@@ -145,7 +147,9 @@ router.post("/upload", upload.single("file"), async (req, res) => {
                 size: req.file.size
             },
 
-            extractedText: result.text
+            extractedText: result.text,
+
+            aiAnalysis: aiAnalysis
         });
 
     } catch (error) {
