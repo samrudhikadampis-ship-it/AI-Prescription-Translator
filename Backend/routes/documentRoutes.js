@@ -2,8 +2,6 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const { PDFParse } = require("pdf-parse");
-
 const { analyzePrescription } = require("../services/aiService");
 
 const {
@@ -113,6 +111,8 @@ router.post(
 
                 console.log("PDF detected.");
 
+
+                const { PDFParse } = require("pdf-parse");
 
                 // Read PDF
                 const dataBuffer =

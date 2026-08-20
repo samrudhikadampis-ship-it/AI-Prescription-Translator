@@ -1,4 +1,36 @@
+function getApiBaseUrl() {
+    const { hostname, origin, port } = window.location;
+
+    if (hostname.endsWith("github.dev")) {
+        return origin.replace(/-\d+(?=\.app\.github\.dev)/, "-5000");
+    }
+
+    if (port === "5000") {
+        return "";
+    }
+
+    return "http://127.0.0.1:5000";
+}
+
+const API_BASE_URL = getApiBaseUrl();
+
 document.addEventListener("DOMContentLoaded", function () {
+
+    fetch(API_BASE_URL + "/api/health")
+        .then(function (response) {
+            return response.json().then(function (data) {
+                console.log("Backend health:", response.status, data);
+            });
+        })
+        .catch(function (error) {
+            console.error(
+                "Backend is not reachable at " +
+                (API_BASE_URL || window.location.origin) +
+                ". Start it with: npm start (in Backend)",
+                error
+            );
+        });
+
 
     // ==========================================
     // HOW IT WORKS MODAL
@@ -96,45 +128,20 @@ document.addEventListener("DOMContentLoaded", function () {
     const decodeBtn =
         document.getElementById("decodeBtn");
 
-
-    // Create status message
     const statusMessage =
-        document.createElement("p");
+        document.getElementById("statusMessage");
 
-    statusMessage.id = "statusMessage";
-
-    statusMessage.style.textAlign = "center";
-    statusMessage.style.marginTop = "20px";
-    statusMessage.style.fontWeight = "600";
-
-
-    // Put status message after decode button
-    if (decodeBtn) {
-
-        decodeBtn.insertAdjacentElement(
-            "afterend",
-            statusMessage
-        );
-
-    }
-
-
-    // Create result container
     const resultContainer =
-        document.createElement("div");
+        document.getElementById("resultContainer");
 
-    resultContainer.id = "resultContainer";
+    function setStatus(message, type) {
+        if (!statusMessage) {
+            return;
+        }
 
-    resultContainer.style.marginTop = "30px";
-
-
-    if (decodeBtn) {
-
-        decodeBtn.insertAdjacentElement(
-            "afterend",
-            resultContainer
-        );
-
+        statusMessage.textContent = message;
+        statusMessage.className = "status-message" +
+            (type ? " is-" + type : "");
     }
 
 
@@ -156,8 +163,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 const file =
                     prescriptionInput.files[0];
 
-                statusMessage.textContent =
-                    `Selected: ${file.name}`;
+                setStatus(
+                    `Selected: ${file.name}`,
+                    "info"
+                );
 
             }
         );
@@ -183,8 +192,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     !prescriptionInput.files.length
                 ) {
 
-                    statusMessage.textContent =
-                        "Please select a prescription image first.";
+                    setStatus(
+                        "Please select a prescription image first.",
+                        "error"
+                    );
 
                     return;
                 }
@@ -203,8 +214,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 if (!allowedTypes.includes(file.type)) {
 
-                    statusMessage.textContent =
-                        "Please upload a JPG or PNG image.";
+                    setStatus(
+                        "Please upload a JPG or PNG image.",
+                        "error"
+                    );
 
                     return;
                 }
@@ -213,8 +226,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Check size
                 if (file.size > 10 * 1024 * 1024) {
 
-                    statusMessage.textContent =
-                        "File size must be less than 10 MB.";
+                    setStatus(
+                        "File size must be less than 10 MB.",
+                        "error"
+                    );
 
                     return;
                 }
@@ -241,8 +256,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 decodeBtn.style.opacity = "0.6";
 
-                statusMessage.textContent =
-                    "Reading your prescription...";
+                setStatus(
+                    "Reading your prescription...",
+                    "loading"
+                );
 
                 resultContainer.innerHTML = "";
 
@@ -256,7 +273,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     const response =
                         await fetch(
-                            "https://literate-fiesta-5g77jp45wr472p6v6-5000.app.github.dev/api/documents/upload",
+                            API_BASE_URL + "/api/documents/upload",
                             {
                                 method: "POST",
                                 body: formData
@@ -291,8 +308,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
 
 
-                    statusMessage.textContent =
-                        "Prescription analyzed successfully!";
+                    setStatus(
+                        "Prescription analyzed successfully.",
+                        "success"
+                    );
 
 
                     // ==================================
@@ -310,9 +329,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     );
 
 
-                    statusMessage.textContent =
+                    setStatus(
                         "Something went wrong: " +
-                        error.message;
+                        error.message,
+                        "error"
+                    );
 
 
                 } finally {
