@@ -1004,3 +1004,67 @@ html {
 #about{
     scroll-margin-top:100px;
 }
+
+.scroll-progress {
+    position: fixed;
+    inset: 0 auto auto 0;
+    z-index: 1000;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #5540ff, #8b73bb, #b94de9);
+    transform: scaleX(0);
+    transform-origin: left;
+    pointer-events: none;
+}
+
+.reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.step,
+.about-card,
+.vision-card {
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.step:hover,
+.about-card:hover,
+.vision-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 40px rgba(76, 49, 155, 0.12);
+}
+
+.step:nth-child(2),
+.about-card:nth-child(2) {
+    transition-delay: 80ms;
+}
+
+.step:nth-child(3),
+.about-card:nth-child(3) {
+    transition-delay: 160ms;
+}
+
+.about-card:nth-child(4) {
+    transition-delay: 240ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

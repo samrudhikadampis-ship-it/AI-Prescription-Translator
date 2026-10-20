@@ -136,7 +136,9 @@ router.post(
 
                 extractedText =
                     result.text
-                        ? result.text.trim()
+                        ? result.text
+                            .replace(/--\s*\d+\s+of\s+\d+\s*--/gi, "")
+                            .trim()
                         : "";
 
 

@@ -134,6 +134,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const resultContainer =
         document.getElementById("resultContainer");
 
+    const uploadArea = document.querySelector(".upload-area");
+    const uploadTitle = document.getElementById("uploadTitle");
+    const selectedFile = document.getElementById("selectedFile");
+    let previewUrl = "";
+
     function setStatus(message, type) {
         if (!statusMessage) {
             return;
@@ -163,6 +168,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 const file =
                     prescriptionInput.files[0];
 
+                showSelectedFile(file);
+
                 setStatus(
                     `Selected: ${file.name}`,
                     "info"
@@ -171,6 +178,67 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         );
 
+    }
+
+    function showSelectedFile(file) {
+        if (!selectedFile) {
+            return;
+        }
+
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            previewUrl = "";
+        }
+
+        selectedFile.replaceChildren();
+
+        if (file.type.startsWith("image/")) {
+            const preview = document.createElement("img");
+            preview.className = "file-preview";
+            preview.alt = "Selected prescription preview";
+            previewUrl = URL.createObjectURL(file);
+            preview.src = previewUrl;
+            selectedFile.append(preview);
+        } else {
+            const fileType = document.createElement("span");
+            fileType.className = "file-type-icon";
+            fileType.textContent = "PDF";
+            selectedFile.append(fileType);
+        }
+
+        const fileName = document.createElement("span");
+        fileName.textContent = file.name;
+        selectedFile.append(fileName);
+
+        if (uploadTitle) {
+            uploadTitle.textContent = "Prescription ready to decode";
+        }
+    }
+
+    if (uploadArea && prescriptionInput) {
+        ["dragenter", "dragover"].forEach(function (eventName) {
+            uploadArea.addEventListener(eventName, function (event) {
+                event.preventDefault();
+                uploadArea.classList.add("is-dragging");
+            });
+        });
+
+        ["dragleave", "drop"].forEach(function (eventName) {
+            uploadArea.addEventListener(eventName, function (event) {
+                event.preventDefault();
+                uploadArea.classList.remove("is-dragging");
+            });
+        });
+
+        uploadArea.addEventListener("drop", function (event) {
+            const [file] = event.dataTransfer.files;
+            if (!file) {
+                return;
+            }
+
+            prescriptionInput.files = event.dataTransfer.files;
+            prescriptionInput.dispatchEvent(new Event("change"));
+        });
     }
 
 
@@ -205,17 +273,18 @@ document.addEventListener("DOMContentLoaded", function () {
                     prescriptionInput.files[0];
 
 
-                // Allowed image types
+                // Allowed prescription formats
                 const allowedTypes = [
                     "image/jpeg",
-                    "image/png"
+                    "image/png",
+                    "application/pdf"
                 ];
 
 
                 if (!allowedTypes.includes(file.type)) {
 
                     setStatus(
-                        "Please upload a JPG or PNG image.",
+                        "Please upload a JPG, PNG or PDF file.",
                         "error"
                     );
 
@@ -370,134 +439,111 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
 
-        let html = `
-
-            <div class="analysis-result">
-
-                <h2>Prescription Analysis</h2>
-
-                <p class="disclaimer">
-                    ${analysis.disclaimer}
-                </p>
-
-        `;
-
-
-        // ==========================================
-        // MEDICINES
-        // ==========================================
-
-        if (
-            analysis.medicines &&
-            analysis.medicines.length > 0
-        ) {
-
-            html += `
-                <h3>💊 Medicines</h3>
-            `;
-
-
-            analysis.medicines.forEach(
-                function (medicine) {
-
-                    html += `
-
-                        <div class="medicine-card">
-
-                            <h4>
-                                ${medicine.name}
-                            </h4>
-
-                            <p>
-                                <strong>Dosage:</strong>
-                                ${medicine.dosage}
-                            </p>
-
-                            <p>
-                                <strong>Frequency:</strong>
-                                ${medicine.frequency}
-                            </p>
-
-                            <p>
-                                <strong>Duration:</strong>
-                                ${medicine.duration}
-                            </p>
-
-                            <p>
-                                <strong>Purpose:</strong>
-                                ${medicine.purpose}
-                            </p>
-
+        const medicines = Array.isArray(analysis.medicines)
+            ? analysis.medicines
+            : [];
+        const instructions = Array.isArray(analysis.instructions)
+            ? analysis.instructions
+            : [];
+        const medicineCards = medicines.length
+            ? medicines.map(function (medicine) {
+                return `
+                    <article class="medicine-card">
+                        <div class="medicine-card-heading">
+                            <span class="medicine-card-icon">✦</span>
+                            <h4>${escapeHtml(medicine.name)}</h4>
                         </div>
+                        <dl>
+                            <div><dt>Dosage</dt><dd>${escapeHtml(medicine.dosage)}</dd></div>
+                            <div><dt>Frequency</dt><dd>${escapeHtml(medicine.frequency)}</dd></div>
+                            <div><dt>Duration</dt><dd>${escapeHtml(medicine.duration)}</dd></div>
+                            <div><dt>Purpose</dt><dd>${escapeHtml(medicine.purpose)}</dd></div>
+                        </dl>
+                    </article>
+                `;
+            }).join("")
+            : `<p class="empty-state">No medicines could be confidently detected. Check the extracted text before relying on this result.</p>`;
+        const instructionList = instructions.length
+            ? `<ul class="instruction-list">${instructions.map(function (instruction) {
+                return `<li>${escapeHtml(instruction)}</li>`;
+            }).join("")}</ul>`
+            : `<p class="empty-state">No specific instructions were detected.</p>`;
+        const extractedText = data.extractedText || analysis.originalText || "";
 
-                    `;
-
-                }
-            );
-
-        } else {
-
-            html += `
-
-                <h3>💊 Medicines</h3>
-
-                <p>
-                    No medicines could be confidently detected.
-                </p>
-
-            `;
-
-        }
-
-
-
-        // ==========================================
-        // INSTRUCTIONS
-        // ==========================================
-
-        if (
-            analysis.instructions &&
-            analysis.instructions.length > 0
-        ) {
-
-            html += `
-
-                <h3>📋 Instructions</h3>
-
-                <ul>
-            `;
-
-
-            analysis.instructions.forEach(
-                function (instruction) {
-
-                    html += `
-                        <li>
-                            ${instruction}
-                        </li>
-                    `;
-
-                }
-            );
-
-
-            html += `
-                </ul>
-            `;
-
-        }
-
-
-        html += `
-
-            </div>
-
+        resultContainer.innerHTML = `
+            <section class="analysis-result">
+                <div class="results-heading">
+                    <div>
+                        <p class="results-eyebrow">✦ YOUR PRESCRIPTION</p>
+                        <h2>Decoded, at a glance.</h2>
+                    </div>
+                    <span class="medicine-count">${medicines.length} ${medicines.length === 1 ? "medicine" : "medicines"}</span>
+                </div>
+                <div class="result-tabs" role="tablist" aria-label="Prescription results">
+                    <button class="result-tab is-active" id="tab-summary" role="tab" aria-selected="true" aria-controls="panel-summary" data-result-tab="summary">Summary</button>
+                    <button class="result-tab" id="tab-medicines" role="tab" aria-selected="false" aria-controls="panel-medicines" data-result-tab="medicines" tabindex="-1">Medicines <span>${medicines.length}</span></button>
+                    <button class="result-tab" id="tab-text" role="tab" aria-selected="false" aria-controls="panel-text" data-result-tab="text" tabindex="-1">Extracted text</button>
+                </div>
+                <div class="result-panel" id="panel-summary" role="tabpanel" aria-labelledby="tab-summary" data-result-panel="summary">
+                    <h3>Instructions</h3>
+                    ${instructionList}
+                    <p class="disclaimer">${escapeHtml(analysis.disclaimer)}</p>
+                </div>
+                <div class="result-panel" id="panel-medicines" role="tabpanel" aria-labelledby="tab-medicines" data-result-panel="medicines" hidden>
+                    <div class="medicine-grid">${medicineCards}</div>
+                </div>
+                <div class="result-panel" id="panel-text" role="tabpanel" aria-labelledby="tab-text" data-result-panel="text" hidden>
+                    <pre class="extracted-text">${escapeHtml(extractedText || "No text could be read from this file.")}</pre>
+                </div>
+            </section>
         `;
 
+        const tabs = Array.from(resultContainer.querySelectorAll("[data-result-tab]"));
 
-        resultContainer.innerHTML =
-            html;
+        function selectTab(tabName) {
+            tabs.forEach(function (tab) {
+                const isSelected = tab.dataset.resultTab === tabName;
+                tab.classList.toggle("is-active", isSelected);
+                tab.setAttribute("aria-selected", String(isSelected));
+                tab.tabIndex = isSelected ? 0 : -1;
+            });
 
+            resultContainer.querySelectorAll("[data-result-panel]").forEach(function (panel) {
+                panel.hidden = panel.dataset.resultPanel !== tabName;
+            });
+        }
+
+        tabs.forEach(function (tab, index) {
+            tab.addEventListener("click", function () {
+                selectTab(tab.dataset.resultTab);
+            });
+            tab.addEventListener("keydown", function (event) {
+                if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+                    return;
+                }
+
+                event.preventDefault();
+                const direction = event.key === "ArrowRight" ? 1 : -1;
+                const nextIndex = (index + direction + tabs.length) % tabs.length;
+                tabs[nextIndex].focus();
+                selectTab(tabs[nextIndex].dataset.resultTab);
+            });
+        });
+
+        resultContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+
+
+    function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>"']/g, function (character) {
+            return {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            }[character];
+        });
+    }
     }
 
 });

@@ -62,9 +62,11 @@
                     ↑
                 </div>
 
-                <h2>
+                <h2 id="uploadTitle">
                     Drop your prescription here
                 </h2>
+
+                <p class="selected-file" id="selectedFile" aria-live="polite"></p>
 
                 <div class="or">
                     <span></span>
@@ -75,18 +77,18 @@
 
                 <label for="prescription" class="choose-btn">
                     <span class="image-icon">▧</span>
-                    Choose Image
+                    Choose File
                 </label>
 
                 <input
                     type="file"
                     id="prescription"
-                    accept="image/png, image/jpeg"
+                    accept="image/png, image/jpeg, application/pdf,.pdf"
                     hidden
                 >
 
                 <p class="file-info">
-                    JPG or PNG &nbsp;•&nbsp; Max 10MB
+                    JPG, PNG or PDF &nbsp;•&nbsp; Max 10MB
                 </p>
 
             </div>
@@ -109,7 +111,7 @@
 
         <p class="status-message" id="statusMessage" aria-live="polite"></p>
 
-        <div id="resultContainer" class="result-container"></div>
+        <div id="resultContainer" class="result-container" aria-live="polite"></div>
 
         <div class="privacy">
 

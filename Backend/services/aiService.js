@@ -34,12 +34,36 @@ function analyzePrescription(text) {
         "ondansetron"
     ];
 
+    const medicineTerms = /\b(tablet|tab|capsule|cap|syrup|injection|drops|ointment|cream)\b/i;
+    const dosageDetails = /\b\d+(?:\.\d+)?\s*(mg|mcg|g|ml|%)\b|\b\d+\s*(day|days|week|weeks|month|months)\b|\b[01]\s*-\s*[01]\s*-\s*[01]\b|\b(?:once|twice|thrice)\s*(?:daily|a day)\b|\b(?:after|before|with)\s+food\b/i;
+    const mergedLines = [];
+
+    for (let index = 0; index < lines.length; index += 1) {
+        let line = lines[index];
+        const lowerLine = line.toLowerCase();
+        const startsMedicineLine =
+            knownMedicines.some(medicine => lowerLine.includes(medicine)) ||
+            medicineTerms.test(line);
+
+        if (startsMedicineLine) {
+            while (
+                index + 1 < lines.length &&
+                dosageDetails.test(lines[index + 1])
+            ) {
+                line += ` ${lines[index + 1]}`;
+                index += 1;
+            }
+        }
+
+        mergedLines.push(line);
+    }
+
 
     // ------------------------------------------
     // Process every OCR line
     // ------------------------------------------
 
-    for (const line of lines) {
+    for (const line of mergedLines) {
 
         const lowerLine = line.toLowerCase();
 

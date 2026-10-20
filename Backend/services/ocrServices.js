@@ -1,11 +1,8 @@
 const Tesseract = require("tesseract.js");
-const { execFile } = require("child_process");
 const path = require("path");
 const fs = require("fs");
-const { promisify } = require("util");
+const os = require("os");
 const sharp = require("sharp");
-
-const execFileAsync = promisify(execFile);
 
 
 // ==========================================
@@ -14,24 +11,24 @@ const execFileAsync = promisify(execFile);
 
 async function extractTextFromImage(imagePath) {
 
+    const processedImagePath = path.join(
+        os.tmpdir(),
+        `medilingo-processed-${Date.now()}-${Math.random().toString(16).slice(2)}.png`
+    );
+
     try {
 
         console.log("Pre-processing image for OCR...");
 
-        const processedImagePath = path.join(
-            path.dirname(imagePath),
-            `processed-${Date.now()}.png`
-        );
-
         await sharp(imagePath)
+            .rotate()
             .resize({
-                width: 2000,
-                withoutEnlargement: false
+                width: 2400,
+                withoutEnlargement: true
             })
             .grayscale()
             .normalize()
             .sharpen()
-            .threshold(180)
             .png()
             .toFile(processedImagePath);
 
@@ -61,11 +58,7 @@ async function extractTextFromImage(imagePath) {
 
         console.log("Image OCR completed.");
 
-        if (fs.existsSync(processedImagePath)) {
-            fs.unlinkSync(processedImagePath);
-        }
-
-        return text;
+        return text.trim();
 
     } catch (error) {
 
@@ -77,6 +70,12 @@ async function extractTextFromImage(imagePath) {
         throw new Error(
             "Failed to extract text from image"
         );
+
+    } finally {
+
+        if (fs.existsSync(processedImagePath)) {
+            fs.unlinkSync(processedImagePath);
+        }
     }
 }
 
@@ -88,36 +87,26 @@ async function extractTextFromImage(imagePath) {
 
 async function extractTextFromPDF(pdfPath) {
 
-    const outputPrefix = path.join(
-        path.dirname(pdfPath),
-        `ocr-${Date.now()}`
-    );
-
-    const imagePath = `${outputPrefix}.png`;
+    const { PDFParse } = require("pdf-parse");
+    const parser = new PDFParse({
+        data: fs.readFileSync(pdfPath)
+    });
 
     try {
 
-        console.log("Converting PDF to image...");
+        console.log("Rendering PDF pages for OCR...");
 
-        await execFileAsync(
-            "pdftoppm",
-            [
-                "-png",
-                "-f",
-                "1",
-                "-singlefile",
-                pdfPath,
-                outputPrefix
-            ]
-        );
+        const { pages } = await parser.getScreenshot({
+            scale: 2,
+            imageDataUrl: false
+        });
+        const pageTexts = [];
 
-        console.log("PDF converted to image.");
+        for (const page of pages) {
+            pageTexts.push(await extractTextFromImage(page.data));
+        }
 
-        const text = await extractTextFromImage(
-            imagePath
-        );
-
-        return text;
+        return pageTexts.filter(Boolean).join("\n\n");
 
     } catch (error) {
 
@@ -129,12 +118,7 @@ async function extractTextFromPDF(pdfPath) {
 
     } finally {
 
-        // Delete temporary PNG
-        if (fs.existsSync(imagePath)) {
-
-            fs.unlinkSync(imagePath);
-
-        }
+        await parser.destroy();
     }
 }
 
