@@ -95,6 +95,19 @@
 
         </div>
 
+        <div class="enhanced-recognition">
+            <label class="enhanced-option" for="enhancedRecognition">
+                <input type="checkbox" id="enhancedRecognition">
+                <span>
+                    <strong>Enhanced handwriting recognition</strong>
+                    <small>Optional AI-assisted transcription for difficult handwriting</small>
+                </span>
+            </label>
+            <p class="recognition-consent">
+                When selected, your prescription image or PDF pages are sent to OpenAI for transcription. The result can still be wrong; verify every medicine and dose with a pharmacist or prescriber.
+            </p>
+        </div>
+
         <button class="decode-btn" id="decodeBtn">
 
             <span class="sparkle">✦</span>
@@ -118,8 +131,8 @@
             <span class="shield">♢</span>
 
             <div>
-                <strong>Your prescription is processed securely</strong>
-                <small>We never store your data.</small>
+                <strong>Local OCR is the default</strong>
+                <small>Uploads are removed after processing. Enhanced recognition sends the file to OpenAI only when selected.</small>
             </div>
 
         </div>

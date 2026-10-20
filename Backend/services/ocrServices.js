@@ -79,13 +79,57 @@ async function extractTextFromImage(imagePath) {
     }
 }
 
+async function extractTextWithVision(image) {
+    if (!process.env.OPENAI_API_KEY) {
+        throw new Error("Enhanced recognition is not configured on this server");
+    }
+
+    const OpenAI = require("openai");
+    const imageBuffer = Buffer.isBuffer(image)
+        ? image
+        : fs.readFileSync(image);
+    const preparedImage = await sharp(imageBuffer)
+        .rotate()
+        .resize({ width: 3000, withoutEnlargement: true })
+        .jpeg({ quality: 95 })
+        .toBuffer();
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const response = await client.chat.completions.create({
+        model: process.env.OPENAI_VISION_MODEL || "gpt-4o-mini",
+        temperature: 0,
+        messages: [{
+            role: "user",
+            content: [
+                {
+                    type: "text",
+                    text: "Transcribe all visible prescription text exactly, preserving line breaks. Do not infer, expand abbreviations, or correct medicine names or numbers. If any character, medicine name, or dose is ambiguous, write [unclear] for that part instead of guessing. Return only the transcription."
+                },
+                {
+                    type: "image_url",
+                    image_url: {
+                        url: `data:image/jpeg;base64,${preparedImage.toString("base64")}`,
+                        detail: "high"
+                    }
+                }
+            ]
+        }]
+    });
+
+    const transcription = response.choices[0]?.message?.content;
+    if (typeof transcription !== "string" || !transcription.trim()) {
+        throw new Error("Enhanced recognition returned no transcription");
+    }
+
+    return transcription.trim();
+}
+
 
 
 // ==========================================
 // OCR FOR PDF FILES
 // ==========================================
 
-async function extractTextFromPDF(pdfPath) {
+async function extractTextFromPDF(pdfPath, recognizeImage = extractTextFromImage) {
 
     const { PDFParse } = require("pdf-parse");
     const parser = new PDFParse({
@@ -103,7 +147,7 @@ async function extractTextFromPDF(pdfPath) {
         const pageTexts = [];
 
         for (const page of pages) {
-            pageTexts.push(await extractTextFromImage(page.data));
+            pageTexts.push(await recognizeImage(page.data));
         }
 
         return pageTexts.filter(Boolean).join("\n\n");
@@ -126,5 +170,6 @@ async function extractTextFromPDF(pdfPath) {
 
 module.exports = {
     extractTextFromImage,
+    extractTextWithVision,
     extractTextFromPDF
 };

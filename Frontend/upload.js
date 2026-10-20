@@ -16,6 +16,9 @@ const API_BASE_URL = getApiBaseUrl();
 
 document.addEventListener("DOMContentLoaded", function () {
 
+    const enhancedRecognitionInput =
+        document.getElementById("enhancedRecognition");
+
     fetch(API_BASE_URL + "/api/health")
         .then(function (response) {
             return response.json().then(function (data) {
@@ -316,6 +319,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     file
                 );
 
+                formData.append(
+                    "enhancedRecognition",
+                    String(Boolean(enhancedRecognitionInput?.checked))
+                );
+
 
                 // ======================================
                 // UI LOADING
@@ -326,7 +334,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 decodeBtn.style.opacity = "0.6";
 
                 setStatus(
-                    "Reading your prescription...",
+                    enhancedRecognitionInput?.checked
+                        ? "Transcribing with enhanced handwriting recognition..."
+                        : "Reading your prescription locally...",
                     "loading"
                 );
 
@@ -378,7 +388,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                     setStatus(
-                        "Prescription analyzed successfully.",
+                        "Transcription complete. Verify every medicine and dose before use.",
                         "success"
                     );
 
@@ -469,6 +479,13 @@ document.addEventListener("DOMContentLoaded", function () {
             }).join("")}</ul>`
             : `<p class="empty-state">No specific instructions were detected.</p>`;
         const extractedText = data.extractedText || analysis.originalText || "";
+        const recognition = data.recognition || {};
+        const recognitionLabel = recognition.mode === "enhanced"
+            ? "Enhanced AI transcription"
+            : "Local OCR";
+        const fallbackWarning = recognition.warning
+            ? `<p class="recognition-fallback">${escapeHtml(recognition.warning)}</p>`
+            : "";
 
         resultContainer.innerHTML = `
             <section class="analysis-result">
@@ -476,6 +493,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <div>
                         <p class="results-eyebrow">✦ YOUR PRESCRIPTION</p>
                         <h2>Decoded, at a glance.</h2>
+                        <p class="recognition-label">${recognitionLabel}</p>
                     </div>
                     <span class="medicine-count">${medicines.length} ${medicines.length === 1 ? "medicine" : "medicines"}</span>
                 </div>
@@ -485,6 +503,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     <button class="result-tab" id="tab-text" role="tab" aria-selected="false" aria-controls="panel-text" data-result-tab="text" tabindex="-1">Extracted text</button>
                 </div>
                 <div class="result-panel" id="panel-summary" role="tabpanel" aria-labelledby="tab-summary" data-result-panel="summary">
+                    <div class="verification-note">
+                        <strong>Verify before use</strong>
+                        <p>Handwriting recognition is not guaranteed to be correct. Check every medicine name, strength, dose, timing, and duration against the original with your pharmacist or prescriber.</p>
+                    </div>
+                    ${fallbackWarning}
                     <h3>Instructions</h3>
                     ${instructionList}
                     <p class="disclaimer">${escapeHtml(analysis.disclaimer)}</p>

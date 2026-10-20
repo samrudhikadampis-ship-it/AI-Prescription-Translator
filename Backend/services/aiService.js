@@ -65,6 +65,10 @@ function analyzePrescription(text) {
 
     for (const line of mergedLines) {
 
+        if (/\[unclear\]/i.test(line)) {
+            continue;
+        }
+
         const lowerLine = line.toLowerCase();
 
 
@@ -253,7 +257,7 @@ function analyzePrescription(text) {
     return {
 
         disclaimer:
-            "This is an informational explanation only. Confirm prescription details with a qualified healthcare professional.",
+            "OCR and AI can misread prescriptions. Verify every medicine name, strength, dose, timing, and duration against the original with your pharmacist or prescriber before taking anything. This is not medical advice.",
 
         medicines:
             medicines,

@@ -6,7 +6,8 @@ const { analyzePrescription } = require("../services/aiService");
 
 const {
     extractTextFromPDF,
-    extractTextFromImage
+    extractTextFromImage,
+    extractTextWithVision
 } = require("../services/ocrServices");
 
 const router = express.Router();
@@ -96,6 +97,10 @@ router.post(
                 req.file.path
             );
 
+            const enhancedRecognitionRequested =
+                req.body.enhancedRecognition === "true";
+            let recognitionMode = "local";
+            let recognitionWarning = "";
 
             let extractedText = "";
 
@@ -111,35 +116,36 @@ router.post(
 
                 console.log("PDF detected.");
 
+                if (enhancedRecognitionRequested) {
+                    try {
+                        extractedText = await extractTextFromPDF(
+                            req.file.path,
+                            extractTextWithVision
+                        );
+                        recognitionMode = "enhanced";
+                    } catch (error) {
+                        console.error("Enhanced PDF recognition failed:", error);
+                        recognitionWarning = "Enhanced recognition was unavailable; local OCR was used instead. Verify every detail.";
+                    }
+                }
 
-                const { PDFParse } = require("pdf-parse");
+                if (!extractedText) {
+                    const { PDFParse } = require("pdf-parse");
+                    const parser = new PDFParse({
+                        data: fs.readFileSync(req.file.path)
+                    });
 
-                // Read PDF
-                const dataBuffer =
-                    fs.readFileSync(
-                        req.file.path
-                    );
-
-
-                // Try normal PDF text extraction
-                const parser = new PDFParse({
-                    data: dataBuffer
-                });
-
-
-                const result =
-                    await parser.getText();
-
-
-                await parser.destroy();
-
-
-                extractedText =
-                    result.text
-                        ? result.text
-                            .replace(/--\s*\d+\s+of\s+\d+\s*--/gi, "")
-                            .trim()
-                        : "";
+                    try {
+                        const result = await parser.getText();
+                        extractedText = result.text
+                            ? result.text
+                                .replace(/--\s*\d+\s+of\s+\d+\s*--/gi, "")
+                                .trim()
+                            : "";
+                    } finally {
+                        await parser.destroy();
+                    }
+                }
 
 
                 console.log(
@@ -192,15 +198,20 @@ router.post(
                     "Image detected."
                 );
 
-                console.log(
-                    "Starting image OCR..."
-                );
+                if (enhancedRecognitionRequested) {
+                    try {
+                        extractedText = await extractTextWithVision(req.file.path);
+                        recognitionMode = "enhanced";
+                    } catch (error) {
+                        console.error("Enhanced image recognition failed:", error);
+                        recognitionWarning = "Enhanced recognition was unavailable; local OCR was used instead. Verify every detail.";
+                    }
+                }
 
-
-                extractedText =
-                    await extractTextFromImage(
-                        req.file.path
-                    );
+                if (!extractedText) {
+                    console.log("Starting image OCR...");
+                    extractedText = await extractTextFromImage(req.file.path);
+                }
 
 
                 console.log(
@@ -262,6 +273,11 @@ router.post(
                 extractedText:
                     extractedText,
 
+                recognition: {
+                    mode: recognitionMode,
+                    warning: recognitionWarning
+                },
+
                 aiAnalysis:
                     aiAnalysis
             });
@@ -285,6 +301,17 @@ router.post(
                 error:
                     error.message
             });
+
+        } finally {
+            if (req.file?.path) {
+                try {
+                    await fs.promises.unlink(req.file.path);
+                } catch (error) {
+                    if (error.code !== "ENOENT") {
+                        console.error("Failed to remove uploaded file:", error);
+                    }
+                }
+            }
         }
     }
 );

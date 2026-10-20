@@ -3,6 +3,8 @@ const fs = require("fs");
 const express = require("express");
 const cors = require("cors");
 
+require("dotenv").config();
+
 const documentRoutes = require("./routes/documentRoutes");
 
 const app = express();
